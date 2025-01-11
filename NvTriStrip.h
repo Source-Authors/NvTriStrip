@@ -1,17 +1,21 @@
 #ifndef NVTRISTRIP_H
 #define NVTRISTRIP_H
 
+#include <cstddef>
+
 ////////////////////////////////////////////////////////////////////////////////////////
 // Public interface for stripifier
 ////////////////////////////////////////////////////////////////////////////////////////
 
+namespace nvidia::tristrip {
+
 //GeForce1 and 2 cache size
-#define CACHESIZE_GEFORCE1_2 16
+constexpr inline unsigned int CACHESIZE_GEFORCE1_2{16};
 
 //GeForce3 cache size
-#define CACHESIZE_GEFORCE3   24
+constexpr inline unsigned int CACHESIZE_GEFORCE3{24};
 
-enum PrimType
+enum class PrimType
 {
 	PT_LIST,
 	PT_STRIP,
@@ -21,12 +25,12 @@ enum PrimType
 struct PrimitiveGroup
 {
 	PrimType type;
-	unsigned int numIndices;
-	unsigned int* indices;
+	size_t numIndices;
+	size_t* indices;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-	PrimitiveGroup() : type(PT_STRIP), numIndices(0), indices(nullptr) {}
+	PrimitiveGroup() : type(PrimType::PT_STRIP), numIndices(0), indices(nullptr) {}
 	~PrimitiveGroup()
 	{
 		delete[] indices;
@@ -91,8 +95,8 @@ void SetListsOnly(const bool bListsOnly);
 //
 // Be sure to call delete[] on the returned primGroups to avoid leaking mem
 //
-void GenerateStrips(const unsigned int* in_indices, const unsigned int in_numIndices,
-					PrimitiveGroup** primGroups, unsigned int* numGroups);
+void GenerateStrips(const unsigned int* in_indices, const size_t in_numIndices,
+					PrimitiveGroup** primGroups, size_t* numGroups);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -111,7 +115,9 @@ void GenerateStrips(const unsigned int* in_indices, const unsigned int in_numInd
 //
 // Credit goes to the MS Xbox crew for the idea for this interface.
 //
-void RemapIndices(const PrimitiveGroup* in_primGroups, const unsigned int numGroups, 
-				  const unsigned int numVerts, PrimitiveGroup** remappedGroups);
+void RemapIndices(const PrimitiveGroup* in_primGroups, const size_t numGroups, 
+				  const size_t numVerts, PrimitiveGroup** remappedGroups);
+
+}  // namespace nvidia::tristrip
 
 #endif

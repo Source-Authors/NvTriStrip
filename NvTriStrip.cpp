@@ -1,6 +1,10 @@
 #include "NvTriStrip.h"
 #include "NvTriStripObjects.h"
 
+#include <vector>
+
+namespace nvidia::tristrip {
+
 ////////////////////////////////////////////////////////////////////////////////////////
 //private data
 static unsigned int cacheSize    = CACHESIZE_GEFORCE1_2;
@@ -75,80 +79,83 @@ void SetMinStripSize(const unsigned int _minStripSize)
 //
 // Be sure to call delete[] on the returned primGroups to avoid leaking mem
 //
-void GenerateStrips(const unsigned int* in_indices, const unsigned int in_numIndices,
-					PrimitiveGroup** primGroups, unsigned int* numGroups)
+void GenerateStrips(const unsigned int* in_indices, const size_t in_numIndices,
+					PrimitiveGroup** primGroups, size_t* numGroups)
 {
 	//put data in format that the stripifier likes
-	UIntVec tempIndices;
+	internal::UIntVec tempIndices;
 	tempIndices.resize(in_numIndices);
-	unsigned int maxIndex = 0;
-	for(int i = 0; i < in_numIndices; i++)
+
+	size_t maxIndex = 0;
+	for(size_t i = 0; i < in_numIndices; i++)
 	{
 		tempIndices[i] = in_indices[i];
 		if(in_indices[i] > maxIndex)
 			maxIndex = in_indices[i];
 	}
-	NvStripInfoVec tempStrips;
-	NvFaceInfoVec tempFaces;
 
-	NvStripifier stripifier;
+	internal::NvStripInfoVec tempStrips;
+	internal::NvFaceInfoVec tempFaces;
+
+	internal::NvStripifier stripifier;
 	
 	//do actual stripification
 	stripifier.Stripify(tempIndices, cacheSize, minStripSize, maxIndex, tempStrips, tempFaces);
 
 	//stitch strips together
-	IntVec stripIndices;
-	unsigned int numSeparateStrips = 0;
-	//int i = 0;
+	internal::IntVec stripIndices;
+	size_t numSeparateStrips = 0;
 
 	if(bListsOnly)
 	{
 		//if we're outputting only lists, we're done
 		*numGroups = 1;
-		(*primGroups) = new PrimitiveGroup[*numGroups];
-		PrimitiveGroup* primGroupArray = *primGroups;
+		auto* primGroupArray = new PrimitiveGroup[*numGroups];
+		(*primGroups) = primGroupArray;
 
 		//count the total number of indices
-		unsigned int numIndices = 0;
-		for(int i = 0; i < tempStrips.size(); i++)
+		size_t numIndices = 0;
+		for(auto &s : tempStrips)
 		{
-			numIndices += (int)(tempStrips[i]->m_faces.size()) * 3;
+			numIndices += s->m_faces.size() * 3;
 		}
 
 		//add in the list
-		numIndices += (int)(tempFaces.size()) * 3;
+		numIndices += tempFaces.size() * 3;
 
-		primGroupArray[0].type       = PT_LIST;
-		primGroupArray[0].numIndices = numIndices;
-		primGroupArray[0].indices    = new unsigned int[numIndices];
+		auto &first      = primGroupArray[0];
+
+		first.type       = PrimType::PT_LIST;
+		first.numIndices = numIndices;
+		first.indices    = new size_t[numIndices];
 
 		//do strips
-		unsigned int indexCtr = 0;
-		for(int i = 0; i < tempStrips.size(); i++)
+		size_t indexCtr = 0;
+		for(auto &s : tempStrips)
 		{
-			for(int j = 0; j < tempStrips[i]->m_faces.size(); j++)
+			for(auto &f : s->m_faces)
 			{
 				//degenerates are of no use with lists
-				if(!NvStripifier::IsDegenerate(tempStrips[i]->m_faces[j]))
+				if(!internal::NvStripifier::IsDegenerate(f))
 				{
-					primGroupArray[0].indices[indexCtr++] = tempStrips[i]->m_faces[j]->m_v0;
-					primGroupArray[0].indices[indexCtr++] = tempStrips[i]->m_faces[j]->m_v1;
-					primGroupArray[0].indices[indexCtr++] = tempStrips[i]->m_faces[j]->m_v2;
+					first.indices[indexCtr++] = f->m_v0;
+					first.indices[indexCtr++] = f->m_v1;
+					first.indices[indexCtr++] = f->m_v2;
 				}
 				else
 				{
 					//we've removed a tri, reduce the number of indices
-					primGroupArray[0].numIndices -= 3;
+					first.numIndices -= 3;
 				}
 			}
 		}
 
 		//do lists
-		for(int i = 0; i < tempFaces.size(); i++)
+		for(auto &f : tempFaces)
 		{
-			primGroupArray[0].indices[indexCtr++] = tempFaces[i]->m_v0;
-			primGroupArray[0].indices[indexCtr++] = tempFaces[i]->m_v1;
-			primGroupArray[0].indices[indexCtr++] = tempFaces[i]->m_v2;
+			first.indices[indexCtr++] = f->m_v0;
+			first.indices[indexCtr++] = f->m_v1;
+			first.indices[indexCtr++] = f->m_v2;
 		}
 	}
 	else
@@ -167,33 +174,36 @@ void GenerateStrips(const unsigned int* in_indices, const unsigned int in_numInd
 		PrimitiveGroup* primGroupArray = *primGroups;
 		
 		//first, the strips
-		int startingLoc = 0;
-		for(int stripCtr = 0; stripCtr < numSeparateStrips; stripCtr++)
+		size_t startingLoc = 0;
+		for(size_t stripCtr = 0; stripCtr < numSeparateStrips; stripCtr++)
 		{
-			int stripLength = 0;
+			size_t stripLength = 0;
 
 			if(!bStitchStrips)
 			{
 				//if we've got multiple strips, we need to figure out the correct length
-				int i;
+				size_t i;
 				for(i = startingLoc; i < stripIndices.size(); i++)
 				{
 					if(stripIndices[i] == -1)
 						break;
 				}
 				
+				assert(i >= startingLoc);
 				stripLength = i - startingLoc;
 			}
 			else
-				stripLength = (int)(stripIndices.size());
+				stripLength = stripIndices.size();
 			
-			primGroupArray[stripCtr].type       = PT_STRIP;
-			primGroupArray[stripCtr].indices    = new unsigned int[stripLength];
-			primGroupArray[stripCtr].numIndices = stripLength;
+			auto &strip      = primGroupArray[stripCtr];
+
+			strip.type       = PrimType::PT_STRIP;
+			strip.indices    = new size_t[stripLength];
+			strip.numIndices = stripLength;
 			
-			int indexCtr = 0;
-			for(int i = startingLoc; i < stripLength + startingLoc; i++)
-				primGroupArray[stripCtr].indices[indexCtr++] = stripIndices[i];
+			size_t indexCtr = 0;
+			for(size_t i = startingLoc; i < stripLength + startingLoc; i++)
+				strip.indices[indexCtr++] = stripIndices[i];
 
 			//we add 1 to account for the -1 separating strips
 			//this doesn't break the stitched case since we'll exit the loop
@@ -203,16 +213,22 @@ void GenerateStrips(const unsigned int* in_indices, const unsigned int in_numInd
 		//next, the list
 		if(tempFaces.size() != 0)
 		{
-			int faceGroupLoc = (*numGroups) - 1;    //the face group is the last one
-			primGroupArray[faceGroupLoc].type       = PT_LIST;
-			primGroupArray[faceGroupLoc].indices    = new unsigned int[tempFaces.size() * 3];
-			primGroupArray[faceGroupLoc].numIndices = (unsigned int)(tempFaces.size()) * 3;
-			int indexCtr = 0;
-			for(int i = 0; i < tempFaces.size(); i++)
+			assert(*numGroups >= 1);
+
+			size_t faceGroupLoc = (*numGroups) - 1;    //the face group is the last one
+			
+			auto &strip      = primGroupArray[faceGroupLoc];
+
+			strip.type       = PrimType::PT_LIST;
+			strip.indices    = new size_t[tempFaces.size() * 3];
+			strip.numIndices = tempFaces.size() * 3;
+
+			size_t indexCtr = 0;
+			for(auto &f : tempFaces)
 			{
-				primGroupArray[faceGroupLoc].indices[indexCtr++] = tempFaces[i]->m_v0;
-				primGroupArray[faceGroupLoc].indices[indexCtr++] = tempFaces[i]->m_v1;
-				primGroupArray[faceGroupLoc].indices[indexCtr++] = tempFaces[i]->m_v2;
+				strip.indices[indexCtr++] = f->m_v0;
+				strip.indices[indexCtr++] = f->m_v1;
+				strip.indices[indexCtr++] = f->m_v2;
 			}
 		}
 	}
@@ -220,22 +236,22 @@ void GenerateStrips(const unsigned int* in_indices, const unsigned int in_numInd
 	//clean up everything
 
 	//delete strips
-	for(int i = 0; i < tempStrips.size(); i++)
+	for(auto &s : tempStrips)
 	{
-		for(int j = 0; j < tempStrips[i]->m_faces.size(); j++)
+		for(auto &f : s->m_faces)
 		{
-			delete tempStrips[i]->m_faces[j];
-			tempStrips[i]->m_faces[j] = NULL;
+			delete f;
+			f = nullptr;
 		}
-		delete tempStrips[i];
-		tempStrips[i] = NULL;
+		delete s;
+		s = nullptr;
 	}
 
 	//delete faces
-	for(int i = 0; i < tempFaces.size(); i++)
+	for(auto &f : tempFaces)
 	{
-		delete tempFaces[i];
-		tempFaces[i] = NULL;
+		delete f;
+		f = nullptr;
 	}
 }
 
@@ -254,31 +270,29 @@ void GenerateStrips(const unsigned int* in_indices, const unsigned int in_numInd
 // Note that, according to the remapping handed back to you, you must reorder your 
 //  vertex buffer.
 //
-void RemapIndices(const PrimitiveGroup* in_primGroups, const unsigned int numGroups,
-				  const unsigned int numVerts, PrimitiveGroup** remappedGroups)
+void RemapIndices(const PrimitiveGroup* in_primGroups, const size_t numGroups,
+				  const size_t numVerts, PrimitiveGroup** remappedGroups)
 {
 	(*remappedGroups) = new PrimitiveGroup[numGroups];
 
 	//caches oldIndex --> newIndex conversion
-	int *indexCache;
-	indexCache = new int[numVerts];
-	memset(indexCache, -1, sizeof(int)*numVerts);
+	std::vector<size_t> indexCache{numVerts, std::numeric_limits<size_t>::max(), std::allocator<size_t>()};
 	
 	//loop over primitive groups
-	unsigned int indexCtr = 0;
-	for(int i = 0; i < numGroups; i++)
+	size_t indexCtr = 0;
+	for(size_t i = 0; i < numGroups; i++)
 	{
-		unsigned int numIndices = in_primGroups[i].numIndices;
+		size_t numIndices = in_primGroups[i].numIndices;
 
 		//init remapped group
 		(*remappedGroups)[i].type       = in_primGroups[i].type;
 		(*remappedGroups)[i].numIndices = numIndices;
-		(*remappedGroups)[i].indices    = new unsigned int[numIndices];
+		(*remappedGroups)[i].indices    = new size_t[numIndices];
 
-		for(int j = 0; j < numIndices; j++)
+		for(size_t j = 0; j < numIndices; j++)
 		{
-			int cachedIndex = indexCache[in_primGroups[i].indices[j]];
-			if(cachedIndex == -1) //we haven't seen this index before
+			size_t cachedIndex = indexCache[in_primGroups[i].indices[j]];
+			if(cachedIndex == std::numeric_limits<size_t>::max()) //we haven't seen this index before
 			{
 				//point to "last" vertex in VB
 				(*remappedGroups)[i].indices[j] = indexCtr;
@@ -293,6 +307,6 @@ void RemapIndices(const PrimitiveGroup* in_primGroups, const unsigned int numGro
 			}
 		}
 	}
-
-	delete[] indexCache;
 }
+
+}  // namespace nvidia::tristrip

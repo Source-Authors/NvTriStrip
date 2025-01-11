@@ -1,49 +1,46 @@
 #ifndef VERTEX_CACHE_H
 #define VERTEX_CACHE_H
 
+#include <cassert>
 #include <cstring>
+
+namespace nvidia::tristrip::internal {
 
 class VertexCache
 {
-	
 public:
-	
-	VertexCache(int size)
+	explicit VertexCache(size_t size)
 	{
 		numEntries = size;
 		
 		entries = new int[numEntries];
 		
-		for(int i = 0; i < numEntries; i++)
+		for(size_t i = 0; i < numEntries; i++)
 			entries[i] = -1;
 	}
 		
-	VertexCache() { VertexCache(16); }
-	~VertexCache() { delete[] entries; entries = 0; }
+	VertexCache() : VertexCache(16) { }
+	~VertexCache() { delete[] entries; entries = nullptr; }
 	
-	bool InCache(int entry)
+	bool InCache(int entry) const
 	{
-		bool returnVal = false;
-		for(int i = 0; i < numEntries; i++)
+		for(size_t i = 0; i < numEntries; i++)
 		{
 			if(entries[i] == entry)
 			{
-				returnVal = true;
-				break;
+				return true;
 			}
 		}
 		
-		return returnVal;
+		return false;
 	}
 	
 	int AddEntry(int entry)
 	{
-		int removed;
-		
-		removed = entries[numEntries - 1];
+		int removed = entries[numEntries - 1];
 		
 		//push everything right one
-		for(int i = numEntries - 2; i >= 0; i--)
+		for(ptrdiff_t i = numEntries - 2; i >= 0; i--)
 		{
 			entries[i + 1] = entries[i];
 		}
@@ -58,22 +55,22 @@ public:
 		memset(entries, -1, sizeof(int) * numEntries);
 	}
 	
-	void Copy(VertexCache* inVcache) 
+	void Copy(VertexCache* inVcache) const
 	{
-		for(int i = 0; i < numEntries; i++)
+		for(size_t i = 0; i < numEntries; i++)
 		{
 			inVcache->Set(i, entries[i]);
 		}
 	}
 
-	int At(int index) { return entries[index]; }
-	void Set(int index, int value) { entries[index] = value; }
+	int At(size_t index) const { assert(index < numEntries); return entries[index]; }
+	void Set(size_t index, int value) { assert(index < numEntries); entries[index] = value; }
 
 private:
-
   int *entries;
-  int numEntries;
-
+  size_t numEntries;
 };
+
+}  // namespace nvidia::tristrip::internal
 
 #endif

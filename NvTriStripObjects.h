@@ -4,6 +4,7 @@
 #include "VertexCache.h"
 
 #include <cassert>
+#include <cstddef>
 #include <vector>
 #include <list>
 
@@ -13,12 +14,14 @@
 //
 /////////////////////////////////////////////////////////////////////////////////
 
+namespace nvidia::tristrip::internal {
+
 struct MyVertex {
 	float x, y, z;
 	float nx, ny, nz;
 };
 
-typedef MyVertex MyVector;
+using MyVector = MyVertex;
 
 struct MyFace {
 	int v1, v2, v3;
@@ -28,7 +31,6 @@ struct MyFace {
 
 class NvFaceInfo {
 public:
-	
 	// vertex indices
 	NvFaceInfo(int v0, int v1, int v2){
 		m_v0 = v0; m_v1 = v1; m_v2 = v2;
@@ -49,15 +51,14 @@ public:
 // the lesser of the indices
 class NvEdgeInfo {
 public:
-	
 	// constructor puts 1 ref on us
 	NvEdgeInfo (int v0, int v1){
 		m_v0       = v0;
 		m_v1       = v1;
-		m_face0    = NULL;
-		m_face1    = NULL;
-		m_nextV0   = NULL;
-		m_nextV1   = NULL;
+		m_face0    = nullptr;
+		m_face1    = nullptr;
+		m_nextV0   = nullptr;
+		m_nextV1   = nullptr;
 		
 		// we will appear in 2 lists.  this is a good
 		// way to make sure we delete it the second time
@@ -94,29 +95,20 @@ public:
 };
 
 
-typedef std::vector<NvFaceInfo*>     NvFaceInfoVec;
-typedef std::list  <NvFaceInfo*>     NvFaceInfoList;
-typedef std::list  <NvFaceInfoVec*>  NvStripList;
-typedef std::vector<NvEdgeInfo*>     NvEdgeInfoVec;
+using NvFaceInfoVec = std::vector<NvFaceInfo*>;
+using NvFaceInfoList = std::list<NvFaceInfo*>;
+using NvStripList = std::list<NvFaceInfoVec*>;
+using NvEdgeInfoVec = std::vector<NvEdgeInfo*>;
 
-typedef std::vector<unsigned short> WordVec;
-typedef std::vector<unsigned int> UIntVec;
-typedef std::vector<int> IntVec;
-typedef std::vector<MyVertex> MyVertexVec;
-typedef std::vector<MyFace> MyFaceVec;
-
-template<class T> 
-inline void SWAP(T& first, T& second) 
-{
-	T temp = first;
-	first = second;
-	second = temp;
-}
+using WordVec = std::vector<unsigned short>;
+using UIntVec = std::vector<unsigned int>;
+using IntVec = std::vector<int>;
+using MyVertexVec = std::vector<MyVertex>;
+using MyFaceVec = std::vector<MyFace>;
 
 // This is a summary of a strip that has been built
 class NvStripInfo {
 public:
-	
 	// A little information about the creation of the triangle strips
 	NvStripInfo(const NvStripStartInfo &startInfo, int stripId, int experimentId = -1) :
 	  m_startInfo(startInfo)
@@ -132,22 +124,22 @@ public:
 	  
 	inline bool IsInStrip (const NvFaceInfo *faceInfo) const 
 	{
-		if(faceInfo == NULL)
+		if(faceInfo == nullptr)
 			return false;
 		  
 		return (m_experimentId >= 0 ? faceInfo->m_testStripId == m_stripId : faceInfo->m_stripId == m_stripId);
 	}
 	  
-	bool SharesEdge(const NvFaceInfo* faceInfo, NvEdgeInfoVec &edgeInfos);
+	bool SharesEdge(const NvFaceInfo* faceInfo, NvEdgeInfoVec &edgeInfos) const;
 	  
 	// take the given forward and backward strips and combine them together
 	void Combine(const NvFaceInfoVec &forward, const NvFaceInfoVec &backward);
 	  
 	//returns true if the face is "unique", i.e. has a vertex which doesn't exist in the faceVec
-	bool Unique(NvFaceInfoVec& faceVec, NvFaceInfo* face);
+	bool Unique(NvFaceInfoVec& faceVec, NvFaceInfo* face) const;
 	  
 	// mark the triangle as taken by this strip
-	bool IsMarked    (NvFaceInfo *faceInfo);
+	bool IsMarked    (NvFaceInfo *faceInfo) const;
 	void MarkTriangle(NvFaceInfo *faceInfo);
 	  
 	// build the strip
@@ -168,7 +160,7 @@ public:
 // END EPIC MOD: Fix memory leak
 };
 
-typedef std::vector<NvStripInfo*>    NvStripInfoVec;
+using NvStripInfoVec = std::vector<NvStripInfo*>;
 
 
 //The actual stripifier
@@ -181,8 +173,8 @@ public:
 	
 	//the target vertex cache size, the structure to place the strips in, and the input indices
 	void Stripify(const UIntVec &in_indices, const int in_cacheSize, const int in_minStripLength, 
-				  const unsigned int maxIndex, NvStripInfoVec &allStrips, NvFaceInfoVec &allFaces);
-	void CreateStrips(const NvStripInfoVec& allStrips, IntVec& stripIndices, const bool bStitchStrips, unsigned int& numSeparateStrips);
+				  const size_t maxIndex, NvStripInfoVec &allStrips, NvFaceInfoVec &allFaces);
+	void CreateStrips(const NvStripInfoVec& allStrips, IntVec& stripIndices, const bool bStitchStrips, size_t& numSeparateStrips);
 	
 	static int GetUniqueVertexInB(NvFaceInfo *faceA, NvFaceInfo *faceB);
 	//static int GetSharedVertex(NvFaceInfo *faceA, NvFaceInfo *faceB);
@@ -243,5 +235,7 @@ protected:
 	// to these protected stripificaton methods if they want
 	friend class NvStripInfo;
 };
+
+}  // namespace nvidia::tristrip::internal
 
 #endif
