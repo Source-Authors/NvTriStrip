@@ -1,15 +1,15 @@
-README for NvTriStrip, library version
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# README for NvTriStrip, library version
 
-To use: 
+[![Build](https://github.com/Source-Authors/NvTriStrip/actions/workflows/build.yml/badge.svg)](https://github.com/Source-Authors/NvTriStrip/actions/workflows/build.yml)
+[![GitHub Repo Size in Bytes](https://img.shields.io/github/repo-size/Source-Authors/NvTriStrip.svg)](https://github.com/Source-Authors/NvTriStrip)
+
+## To use: 
 -#include "NvTriStrip.h"
 -put nvtristrip.lib in your library path (the pragma in nvtristrip.h will automatically look for the library).
 
 Check out NvTriStrip.h for the interface.
 
-See the StripTest source code (in function LoadXFileStripped) for an example of using the library.
-
-Features:
+## Features:
 -generates strips from arbitrary geometry.
 -flexibly optimizes for post TnL vertex caches (16 on GeForce1/2, 24 on GeForce3).
 -can stitch together strips using degenerate triangles, or not.
@@ -17,7 +17,7 @@ Features:
 -can optionally throw excessively small strips into a list instead.
 -can remap indices to improve spatial locality in your vertex buffers.
 
-On cache sizes:
+## On cache sizes
 Note that it's better to UNDERESTIMATE the cache size instead of OVERESTIMATING.
 So, if you're targetting GeForce1, 2, and 3, be conservative and use the GeForce1_2 cache 
 size, NOT the GeForce3 cache size.

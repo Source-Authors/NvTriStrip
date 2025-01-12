@@ -45,13 +45,13 @@ if (NOT DEFINED PACKAGE_VERSION)
     execute_process(COMMAND bash "-c" "git rev-list --branches HEAD | wc -l | tr -d ' ' | tr -d '\n'" OUTPUT_VARIABLE NVTS_GIT_VERSION WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endif()
 
-  set(PACKAGE_VER_PATCH 2)
+  set(PACKAGE_VER_PATCH 0)
   math(EXPR PACKAGE_VER_TWEAK ${NVTS_GIT_VERSION})
   message(STATUS
     "[common]: Build version from Git (patch.tweak): ${PACKAGE_VER_PATCH}.${PACKAGE_VER_TWEAK}.")
 
   set(PACKAGE_VER_MAJOR 1)
-  set(PACKAGE_VER_MINOR 5)
+  set(PACKAGE_VER_MINOR 1)
 
   set(PACKAGE_VERSION
     "${PACKAGE_VER_MAJOR}.${PACKAGE_VER_MINOR}.${PACKAGE_VER_PATCH}.${PACKAGE_VER_TWEAK}")
