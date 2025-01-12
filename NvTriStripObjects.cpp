@@ -12,13 +12,13 @@ namespace nvidia::tristrip::internal {
 
 NvStripifier::NvStripifier()
 {
-	
+  cacheSize = 0;
+  minStripLength = 0;
+  meshJump = 0;
+  bFirstTimeResetPoint = false;
 }
 
-NvStripifier::~NvStripifier()
-{
-	
-}
+NvStripifier::~NvStripifier() = default;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // FindEdgeInfo()
