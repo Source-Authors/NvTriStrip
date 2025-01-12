@@ -172,7 +172,7 @@ public:
 	~NvStripifier();
 	
 	//the target vertex cache size, the structure to place the strips in, and the input indices
-	void Stripify(const UIntVec &in_indices, const int in_cacheSize, const int in_minStripLength, 
+	void Stripify(const UIntVec &in_indices, const int in_cacheSize, const size_t in_minStripLength, 
 				  const size_t maxIndex, NvStripInfoVec &allStrips, NvFaceInfoVec &allFaces);
 	void CreateStrips(const NvStripInfoVec& allStrips, IntVec& stripIndices, const bool bStitchStrips, size_t& numSeparateStrips);
 	
@@ -186,7 +186,7 @@ protected:
 	
 	UIntVec indices;
 	int cacheSize;
-	int minStripLength;
+	size_t minStripLength;
 	float meshJump;
 	bool bFirstTimeResetPoint;
 	
@@ -216,7 +216,7 @@ protected:
 	void CommitStrips(NvStripInfoVec &allStrips, const NvStripInfoVec &strips);
 	
 	float AvgStripSize(const NvStripInfoVec &strips);
-	int FindStartPoint(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos);
+	std::ptrdiff_t FindStartPoint(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos);
 	
 	void UpdateCacheStrip(VertexCache* vcache, NvStripInfo* strip);
 	void UpdateCacheFace(VertexCache* vcache, NvFaceInfo* face);

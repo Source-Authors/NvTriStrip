@@ -3,8 +3,12 @@
 #include "VertexCache.h"
 
 #include <cassert>
-#include <set>
+#include <cstddef>
+#include <cstdio>
+
 #include <algorithm>
+#include <memory>
+#include <set>
 
 namespace nv::tristrip::internal {
 
@@ -251,29 +255,30 @@ void NvStripifier::BuildStripifyInfo(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &ed
 //
 // Finds a good starting point, namely one which has only one neighbor
 //
-int NvStripifier::FindStartPoint(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos)
+std::ptrdiff_t NvStripifier::FindStartPoint(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos)
 {
 	int bestCtr = -1;
-	int bestIndex = -1;
+	std::ptrdiff_t bestIndex = -1, i = 0;
 
-	for(int i = 0; i < faceInfos.size(); i++)
+	for(auto &f : faceInfos)
 	{
 		int ctr = 0;
 		
-		if(FindOtherFace(edgeInfos, faceInfos[i]->m_v0, faceInfos[i]->m_v1, faceInfos[i]) == nullptr)
+		if(FindOtherFace(edgeInfos, f->m_v0, f->m_v1, f) == nullptr)
 			ctr++;
-		if(FindOtherFace(edgeInfos, faceInfos[i]->m_v1, faceInfos[i]->m_v2, faceInfos[i]) == nullptr)
+		if(FindOtherFace(edgeInfos, f->m_v1, f->m_v2, f) == nullptr)
 			ctr++;
-		if(FindOtherFace(edgeInfos, faceInfos[i]->m_v2, faceInfos[i]->m_v0, faceInfos[i]) == nullptr)
+		if(FindOtherFace(edgeInfos, f->m_v2, f->m_v0, f) == nullptr)
 			ctr++;
+
 		if(ctr > bestCtr)
 		{
 			bestCtr = ctr;
 			bestIndex = i;
-			//return i;
 		}
+
+		++i;
 	}
-	//return -1;
 	
 	if(bestCtr == 0)
 		return -1;
@@ -297,8 +302,8 @@ NvFaceInfo* NvStripifier::FindGoodResetPoint(NvFaceInfoVec &faceInfos, NvEdgeInf
 	
 	if(result == nullptr)
 	{
-		int numFaces   = (int)(faceInfos.size());
-		int startPoint;
+		size_t numFaces   = faceInfos.size();
+		std::ptrdiff_t startPoint;
 		if(bFirstTimeResetPoint)
 		{
 			//first time, find a face with few neighbors (look for an edge of the mesh)
@@ -307,13 +312,13 @@ NvFaceInfo* NvStripifier::FindGoodResetPoint(NvFaceInfoVec &faceInfos, NvEdgeInf
 		}
 		else
 // START EPIC MOD: Fix incorrect bracket placement
-			startPoint = (int)(float( numFaces - 1 ) * meshJump );
+			startPoint = (std::ptrdiff_t)(float( numFaces - 1 ) * meshJump );
 // END EPIC MOD: Fix incorrect bracket placement
 		
 		if(startPoint == -1)
 		{
 // START EPIC MOD: Fix incorrect bracket placement
-			startPoint = (int)(float( numFaces - 1 ) * meshJump );
+			startPoint = (std::ptrdiff_t)(float( numFaces - 1 ) * meshJump );
 // END EPIC MOD: Fix incorrect bracket placement
 			
 			//meshJump += 0.1f;
@@ -321,7 +326,7 @@ NvFaceInfo* NvStripifier::FindGoodResetPoint(NvFaceInfoVec &faceInfos, NvEdgeInf
 			//	meshJump = .05f;
 		}
 
-		int i = startPoint;
+		std::ptrdiff_t i = startPoint;
 		do {
 			
 			// if this guy isn't visited, try him
@@ -331,7 +336,7 @@ NvFaceInfo* NvStripifier::FindGoodResetPoint(NvFaceInfoVec &faceInfos, NvEdgeInf
 			}
 			
 			// update the index and clamp to 0-(numFaces-1)
-			if (++i >= numFaces)
+			if (static_cast<size_t>(++i) >= numFaces)
 				i = 0;
 			
 		} while (i != startPoint);
@@ -439,7 +444,7 @@ void NvStripifier::GetSharedVertices(NvFaceInfo *faceA, NvFaceInfo *faceB, int* 
 //
 inline int NvStripifier::GetNextIndex(const UIntVec &indices, NvFaceInfo *face){
 	
-	int numIndices = (int)(indices.size());
+	size_t numIndices = indices.size();
 	assert(numIndices >= 2);
 	
 	int v0  = indices[numIndices-2];
@@ -734,8 +739,8 @@ void NvStripInfo::Build(NvEdgeInfoVec &edgeInfos, NvFaceInfoVec &)
 void NvStripInfo::Combine(const NvFaceInfoVec &forward, const NvFaceInfoVec &backward){
 	
 	// add backward faces
-	int numFaces = (int)(backward.size());
-	for (int i = numFaces - 1; i >= 0; i--)
+	ptrdiff_t numFaces = (ptrdiff_t)backward.size();
+	for (ptrdiff_t i = numFaces - 1; i >= 0; i--)
 		m_faces.emplace_back(backward[i]);
 	
 	// add forward faces
@@ -781,13 +786,11 @@ bool NvStripInfo::SharesEdge(const NvFaceInfo* faceInfo, NvEdgeInfoVec &edgeInfo
 //  vector
 //
 void NvStripifier::CommitStrips(NvStripInfoVec &allStrips, const NvStripInfoVec &strips)
-{	
+{
 	// Iterate through strips
-	int numStrips = (int)(strips.size());
-	for (int i = 0; i < numStrips; i++){
+	for (auto *strip : strips){
 
 		// Tell the strip that it is now real
-		NvStripInfo *strip = strips[i];
 		strip->m_experimentId = -1;
 		
 		// add to the list of real strips
@@ -795,12 +798,9 @@ void NvStripifier::CommitStrips(NvStripInfoVec &allStrips, const NvStripInfoVec 
 		
 		// Iterate through the faces of the strip
 		// Tell the faces of the strip that they belong to a real strip now
-		const NvFaceInfoVec &faces = strips[i]->m_faces;
-		int numFaces = (int)(faces.size());
-
-		for (int j = 0; j < numFaces; j++)
+		for (auto &f : strip->m_faces)
 		{
-			strip->MarkTriangle(faces[j]);
+			strip->MarkTriangle(f);
 		}
 	}
 }
@@ -883,25 +883,25 @@ void NvStripifier::RemoveSmallStrips(NvStripInfoVec& allStrips, NvStripInfoVec& 
 	
 	if(tempFaceList.size())
 	{
-		bool *bVisitedList = new bool[tempFaceList.size()];
-		memset(bVisitedList, 0, tempFaceList.size()*sizeof(bool));
-										
-		VertexCache* vcache = new VertexCache(cacheSize);
+		std::unique_ptr<bool[]> bVisitedList = std::make_unique<bool[]>(tempFaceList.size());
+		memset(bVisitedList.get(), 0, tempFaceList.size()*sizeof(bool));
+
+		std::unique_ptr<VertexCache> vcache = std::make_unique<VertexCache>(cacheSize);
 
 		int numHits;
-		int bestIndex = 0;
+		std::ptrdiff_t bestIndex = 0;
 
 		while(1)
 		{
 			int bestNumHits = -1;
 
 			//find best face to add next, given the current cache
-			for(int i = 0; i < tempFaceList.size(); i++)
+			for(std::ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(tempFaceList.size()); i++)
 			{
 				if(bVisitedList[i])
 					continue;
 
-				numHits = CalcNumHitsFace(vcache, tempFaceList[i]);
+				numHits = CalcNumHitsFace(vcache.get(), tempFaceList[i]);
 				if(numHits > bestNumHits)
 				{
 					bestNumHits = numHits;
@@ -913,12 +913,11 @@ void NvStripifier::RemoveSmallStrips(NvStripInfoVec& allStrips, NvStripInfoVec& 
 				break;
 
 			bVisitedList[bestIndex] = true;
-			UpdateCacheFace(vcache, tempFaceList[bestIndex]);
+
+			UpdateCacheFace(vcache.get(), tempFaceList[bestIndex]);
+
 			faceList.emplace_back(tempFaceList[bestIndex]);
 		}
-
-		delete vcache;
-		delete[] bVisitedList;
 	}
 }
 
@@ -961,7 +960,7 @@ void NvStripifier::CreateStrips(const NvStripInfoVec& allStrips, IntVec& stripIn
 
 	NvFaceInfo tLastFace(0, 0, 0);
 	NvFaceInfo tPrevStripLastFace(0, 0, 0);
-	int nStripCount = (int)(allStrips.size());
+	size_t nStripCount = allStrips.size();
 	assert(nStripCount > 0);
 
 	//we infer the cw/ccw ordering depending on the number of indices
@@ -969,10 +968,10 @@ void NvStripifier::CreateStrips(const NvStripInfoVec& allStrips, IntVec& stripIn
 	//this is to account for that
 	int accountForNegatives = 0;
 
-	for (int i = 0; i < nStripCount; i++)
+	for (size_t i = 0; i < nStripCount; i++)
 	{
 		NvStripInfo *strip = allStrips[i];
-		int nStripFaceCount = (int)(strip->m_faces.size());
+		size_t nStripFaceCount = strip->m_faces.size();
 		assert(nStripFaceCount > 0);
 
 		// Handle the first face in the strip
@@ -1042,7 +1041,7 @@ void NvStripifier::CreateStrips(const NvStripInfoVec& allStrips, IntVec& stripIn
 			tLastFace = tFirstFace;
 		}
 
-		for (int j = 1; j < nStripFaceCount; j++)
+		for (size_t j = 1; j < nStripFaceCount; j++)
 		{
 			int nUnique = GetUniqueVertexInB(&tLastFace, strip->m_faces[j]);
 			if (nUnique != -1)
@@ -1098,7 +1097,7 @@ void NvStripifier::CreateStrips(const NvStripInfoVec& allStrips, IntVec& stripIn
 // in_cacheSize is the target cache size 
 //
 void NvStripifier::Stripify(const UIntVec &in_indices, const int in_cacheSize, 
-							const int in_minStripLength, const size_t maxIndex, 
+							const size_t in_minStripLength, const size_t maxIndex, 
 							NvStripInfoVec &outStrips, NvFaceInfoVec& outFaceList)
 {
 	meshJump = 0.0f;
@@ -1134,15 +1133,17 @@ void NvStripifier::Stripify(const UIntVec &in_indices, const int in_cacheSize,
 		delete as;
 	}
 	
-	for (size_t i = 0; i < allEdgeInfos.size(); i++)
+	std::ptrdiff_t i = 0;
+	for (auto *info : allEdgeInfos)
 	{
-		NvEdgeInfo *info = allEdgeInfos[i];
 		while (info != nullptr)
 		{
 			NvEdgeInfo *next = (info->m_v0 == i ? info->m_nextV0 : info->m_nextV1);
 			info->Unref();
 			info = next;
 		}
+
+		i++;
 	}
 	
 }
@@ -1184,23 +1185,23 @@ void NvStripifier::SplitUpStripsAndOptimize(NvStripInfoVec &allStrips, NvStripIn
 	NvStripInfoVec tempStrips;
 	
 	//split up strips into threshold-sized pieces
-	for(int i = 0; i < allStrips.size(); i++)
+	for(auto &as : allStrips)
 	{
 		NvStripInfo* currentStrip;
 		NvStripStartInfo startInfo(nullptr, nullptr, false);
 	
 		int actualStripSize = 0;
-		for(auto &f : allStrips[i]->m_faces)
+		for(auto &f : as->m_faces)
 		{
 			if( !IsDegenerate(f) )
 				actualStripSize++;
 		}
 		
-		if(actualStripSize /*allStrips[i]->m_faces.size()*/ > threshold)
+		if(actualStripSize > threshold)
 		{
 			
-			int numTimes    = actualStripSize /*allStrips[i]->m_faces.size()*/ / threshold;
-			int numLeftover = actualStripSize /*allStrips[i]->m_faces.size()*/ % threshold;
+			int numTimes    = actualStripSize / threshold;
+			int numLeftover = actualStripSize % threshold;
 
 			int degenerateCount = 0;
 			int j;
@@ -1212,7 +1213,7 @@ void NvStripifier::SplitUpStripsAndOptimize(NvStripInfoVec &allStrips, NvStripIn
 				bool bFirstTime = true;
 				while(faceCtr < threshold+(j*threshold)+degenerateCount)
 				{
-					if(IsDegenerate(allStrips[i]->m_faces[faceCtr]))
+					if(IsDegenerate(as->m_faces[faceCtr]))
 					{
 						degenerateCount++;
 						
@@ -1221,28 +1222,22 @@ void NvStripifier::SplitUpStripsAndOptimize(NvStripInfoVec &allStrips, NvStripIn
 							 ((j == numTimes - 1) && (numLeftover < 4) && (numLeftover > 0))) && 
 							 !bFirstTime)
 						{
-							currentStrip->m_faces.emplace_back(allStrips[i]->m_faces[faceCtr++]);
+							currentStrip->m_faces.emplace_back(as->m_faces[faceCtr++]);
 						}
 						else
 // START EPIC MOD: Fix memory leak
 						{
-							delete allStrips[ i ]->m_faces[ faceCtr ];
+							delete as->m_faces[ faceCtr ];
 							++faceCtr;
 						}
 // END EPIC MOD: Fix memory leak
 					}
 					else
 					{
-						currentStrip->m_faces.emplace_back(allStrips[i]->m_faces[faceCtr++]);
+						currentStrip->m_faces.emplace_back(as->m_faces[faceCtr++]);
 						bFirstTime = false;
 					}
 				}
-				/*
-				for(int faceCtr = j*threshold; faceCtr < threshold+(j*threshold); faceCtr++)
-				{
-					currentStrip->m_faces.emplace_back(allStrips[i]->m_faces[faceCtr]);
-				}
-				*/
 				///*
 				if(j == numTimes - 1) //last time through
 				{
@@ -1252,14 +1247,14 @@ void NvStripifier::SplitUpStripsAndOptimize(NvStripInfoVec &allStrips, NvStripIn
 						int ctr = 0;
 						while(ctr < numLeftover)
 						{
-							if(!IsDegenerate(allStrips[i]->m_faces[faceCtr]))
+							if(!IsDegenerate(as->m_faces[faceCtr]))
 							{	
-								currentStrip->m_faces.emplace_back(allStrips[i]->m_faces[faceCtr++]);
+								currentStrip->m_faces.emplace_back(as->m_faces[faceCtr++]);
 								++ctr;
 							}
 							else
 							{
-								currentStrip->m_faces.emplace_back(allStrips[i]->m_faces[faceCtr++]);
+								currentStrip->m_faces.emplace_back(as->m_faces[faceCtr++]);
 								++degenerateCount;
 							}
 						}
@@ -1280,28 +1275,22 @@ void NvStripifier::SplitUpStripsAndOptimize(NvStripInfoVec &allStrips, NvStripIn
 				bool bFirstTime = true;
 				while(ctr < numLeftover)
 				{
-					if( !IsDegenerate(allStrips[i]->m_faces[leftOff]) )
+					if( !IsDegenerate(as->m_faces[leftOff]) )
 					{
 						ctr++;
 						bFirstTime = false;
-						currentStrip->m_faces.emplace_back(allStrips[i]->m_faces[leftOff++]);
+						currentStrip->m_faces.emplace_back(as->m_faces[leftOff++]);
 					}
 					else if(!bFirstTime)
-						currentStrip->m_faces.emplace_back(allStrips[i]->m_faces[leftOff++]);
+						currentStrip->m_faces.emplace_back(as->m_faces[leftOff++]);
 					else
 // START EPIC MOD: Fix memory leak
 					{
-						delete allStrips[ i ]->m_faces[ leftOff ];
+						delete as->m_faces[ leftOff ];
 						++leftOff;
 					}
 // END EPIC MOD: Fix memory leak
 				}
-				/*
-				for(int k = 0; k < numLeftover; k++)
-				{
-					currentStrip->m_faces.emplace_back(allStrips[i]->m_faces[leftOff++]);
-				}
-				*/
 				
 				tempStrips.emplace_back(currentStrip);
 			}
@@ -1312,7 +1301,7 @@ void NvStripifier::SplitUpStripsAndOptimize(NvStripInfoVec &allStrips, NvStripIn
 			// this way we can delete allBigStrips later to free the memory
 			currentStrip = new NvStripInfo(startInfo, 0, -1);
 			
-			for(auto &f : allStrips[i]->m_faces)
+			for(auto &f : as->m_faces)
 				currentStrip->m_faces.emplace_back(f);
 			
 			tempStrips.emplace_back(currentStrip);
@@ -1335,27 +1324,29 @@ void NvStripifier::SplitUpStripsAndOptimize(NvStripInfoVec &allStrips, NvStripIn
 		
 		float bestNumHits = -1.0f;
 		float numHits;
-		int bestIndex = 0;
+		std::ptrdiff_t bestIndex = 0;
 		
-		int firstIndex = 0;
+		size_t firstIndex = 0, j = 0;
 		float minCost = 10000.0f;
 		
-		for(int i = 0; i < tempStrips2.size(); i++)
+		for(auto &ts : tempStrips2)
 		{
 			int numNeighbors = 0;
 			
 			//find strip with least number of neighbors per face
-			for(auto &f : tempStrips2[i]->m_faces)
+			for(auto &f : ts->m_faces)
 			{
 				numNeighbors += NumNeighbors(f, edgeInfos);
 			}
 			
-			float currCost = (float)numNeighbors / (float)tempStrips2[i]->m_faces.size();
+			float currCost = (float)numNeighbors / (float)ts->m_faces.size();
 			if(currCost < minCost)
 			{
 				minCost = currCost;
-				firstIndex = i;
+				firstIndex = j;
 			}
+
+			++j;
 		}
 		
 		UpdateCacheStrip(vcache, tempStrips2[firstIndex]);
@@ -1372,7 +1363,7 @@ void NvStripifier::SplitUpStripsAndOptimize(NvStripInfoVec &allStrips, NvStripIn
 			bestNumHits = -1.0f;
 			
 			//find best strip to add next, given the current cache
-			for(int i = 0; i < tempStrips2.size(); i++)
+			for(std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(tempStrips2.size()); i++)
 			{
 				if(tempStrips2[i]->visited)
 					continue;
@@ -1387,7 +1378,7 @@ void NvStripifier::SplitUpStripsAndOptimize(NvStripInfoVec &allStrips, NvStripIn
 				{
 					//check previous strip to see if this one requires it to switch polarity
 					NvStripInfo *strip = tempStrips2[i];
-					int nStripFaceCount = (int)(strip->m_faces.size());
+					size_t nStripFaceCount = strip->m_faces.size();
 					
 					NvFaceInfo tFirstFace(strip->m_faces[0]->m_v0, strip->m_faces[0]->m_v1, strip->m_faces[0]->m_v2);
 					
@@ -1487,8 +1478,8 @@ void NvStripifier::UpdateCacheFace(VertexCache* vcache, NvFaceInfo* face)
 //
 float NvStripifier::CalcNumHitsStrip(VertexCache* vcache, NvStripInfo* strip)
 {
-	ptrdiff_t numHits = 0;
-	ptrdiff_t numFaces = 0;
+	std::ptrdiff_t numHits = 0;
+	std::ptrdiff_t numFaces = 0;
 	
 	for(auto &f : strip->m_faces)
 	{
@@ -1564,7 +1555,7 @@ int NvStripifier::NumNeighbors(NvFaceInfo* face, NvEdgeInfoVec& edgeInfoVec)
 // Finds the average strip size of the input vector of strips
 //
 float NvStripifier::AvgStripSize(const NvStripInfoVec &strips){
-	ptrdiff_t sizeAccum = 0;
+	std::ptrdiff_t sizeAccum = 0;
 	size_t numStrips = strips.size();
 	for (auto *strip : strips){
 		sizeAccum += strip->m_faces.size();
@@ -1593,12 +1584,8 @@ void NvStripifier::FindAllStrips(NvStripInfoVec &allStrips,
 	int stripId      = 0;
 	bool done        = false;
 
-	int loopCtr = 0;
-	
 	while (!done)
 	{
-		loopCtr++;
-		
 		//
 		// PHASE 1: Set up numSamples * numEdges experiments
 		//
@@ -1717,8 +1704,8 @@ void NvStripifier::FindAllStrips(NvStripInfoVec &allStrips,
 		{
 			if (i != bestIndex)
 			{
-				int numStrips = (int)(experiments[i].size());
-				for (int j = 0; j < numStrips; j++)
+				size_t numStrips = experiments[i].size();
+				for (size_t j = 0; j < numStrips; j++)
 				{
 // START EPIC MOD: Fix memory leak
 					for ( int iDegenerate = 0; iDegenerate < experiments[ i ][ j ]->m_numDegenerates; ++iDegenerate )

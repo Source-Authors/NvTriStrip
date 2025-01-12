@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <cstddef>
 
 namespace nv::tristrip::internal {
 
@@ -40,7 +41,7 @@ public:
 		int removed = entries[numEntries - 1];
 		
 		//push everything right one
-		for(ptrdiff_t i = numEntries - 2; i >= 0; i--)
+		for(std::ptrdiff_t i = numEntries - 2; i >= 0; i--)
 		{
 			entries[i + 1] = entries[i];
 		}

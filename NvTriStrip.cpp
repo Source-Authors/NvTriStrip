@@ -1,6 +1,7 @@
 #include "NvTriStrip.h"
 #include "NvTriStripObjects.h"
 
+#include <limits>
 #include <vector>
 
 namespace nv::tristrip {
