@@ -3,7 +3,7 @@
 
 #include <vector>
 
-namespace nvidia::tristrip {
+namespace nv::tristrip {
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //private data
@@ -309,4 +309,4 @@ void RemapIndices(const PrimitiveGroup* in_primGroups, const size_t numGroups,
 	}
 }
 
-}  // namespace nvidia::tristrip
+}  // namespace nv::tristrip

@@ -7,7 +7,7 @@
 // Public interface for stripifier
 ////////////////////////////////////////////////////////////////////////////////////////
 
-namespace nvidia::tristrip {
+namespace nv::tristrip {
 
 //GeForce1 and 2 cache size
 constexpr inline unsigned int CACHESIZE_GEFORCE1_2{16};
@@ -118,6 +118,6 @@ void GenerateStrips(const unsigned int* in_indices, const size_t in_numIndices,
 void RemapIndices(const PrimitiveGroup* in_primGroups, const size_t numGroups, 
 				  const size_t numVerts, PrimitiveGroup** remappedGroups);
 
-}  // namespace nvidia::tristrip
+}  // namespace nv::tristrip
 
 #endif

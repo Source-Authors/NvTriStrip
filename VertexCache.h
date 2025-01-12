@@ -4,7 +4,7 @@
 #include <cassert>
 #include <cstring>
 
-namespace nvidia::tristrip::internal {
+namespace nv::tristrip::internal {
 
 class VertexCache
 {
@@ -71,6 +71,6 @@ private:
   size_t numEntries;
 };
 
-}  // namespace nvidia::tristrip::internal
+}  // namespace nv::tristrip::internal
 
 #endif

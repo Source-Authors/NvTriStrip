@@ -6,7 +6,7 @@
 #include <set>
 #include <algorithm>
 
-namespace nvidia::tristrip::internal {
+namespace nv::tristrip::internal {
 
 constexpr inline int CACHE_INEFFICIENCY{6};
 
@@ -1737,5 +1737,5 @@ void NvStripifier::FindAllStrips(NvStripInfoVec &allStrips,
   }
 }
 
-}  // namespace nvidia::tristrip::internal
+}  // namespace nv::tristrip::internal
 

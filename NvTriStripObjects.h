@@ -14,7 +14,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////
 
-namespace nvidia::tristrip::internal {
+namespace nv::tristrip::internal {
 
 struct MyVertex {
 	float x, y, z;
@@ -232,6 +232,6 @@ protected:
 	friend class NvStripInfo;
 };
 
-}  // namespace nvidia::tristrip::internal
+}  // namespace nv::tristrip::internal
 
 #endif
