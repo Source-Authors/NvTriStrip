@@ -197,9 +197,6 @@ protected:
 	/////////////////////////////////////////////////////////////////////////////////
 
 	//********************
-	bool IsMoneyFace(const NvFaceInfo& face);
-	bool FaceContainsIndex(const NvFaceInfo& face, const unsigned int index);
-
 	bool IsCW(NvFaceInfo *faceInfo, int v0, int v1);
 	bool NextIsCW(const int numIndices);
 	
@@ -228,7 +225,7 @@ protected:
 	int CalcNumHitsFace(VertexCache* vcache, NvFaceInfo* face);
 	int NumNeighbors(NvFaceInfo* face, NvEdgeInfoVec& edgeInfoVec);
 	
-	void BuildStripifyInfo(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos, const unsigned int maxIndex);
+	void BuildStripifyInfo(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos, const size_t maxIndex);
 	bool AlreadyExists(NvFaceInfo* faceInfo, NvFaceInfoVec& faceInfos);
 	
 	// let our strip info classes and the other classes get
