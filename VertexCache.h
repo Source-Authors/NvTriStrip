@@ -1,5 +1,5 @@
-#ifndef VERTEX_CACHE_H
-#define VERTEX_CACHE_H
+#ifndef NV_VERTEX_CACHE_H
+#define NV_VERTEX_CACHE_H
 
 #include <cassert>
 #include <cstring>

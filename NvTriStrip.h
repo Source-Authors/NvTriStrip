@@ -1,5 +1,5 @@
-#ifndef NVTRISTRIP_H
-#define NVTRISTRIP_H
+#ifndef NV_TRISTRIP_H
+#define NV_TRISTRIP_H
 
 #include <cstddef>
 
