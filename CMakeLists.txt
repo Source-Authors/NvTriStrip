@@ -105,6 +105,12 @@ endif()
 set(NV_NVTS_PRODUCT_NAME "nvTriStrip" CACHE STRING
   "Name of the nvTriStrip product.")
 
+# Default build type is Release unless overridden.
+# On Windows default is Debug, so need to unify.
+# See https://discourse.cmake.org/t/how-to-deal-with-ninja-setting-cmake-build-type-to-debug/281/3
+set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+  "Choose the type of build.")
+
 set(NV_NVTS_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
   "CMake build type used to build ${PACKAGE_NAME}.")
 set(NV_NVTS_CMAKE_GENERATOR "${CMAKE_GENERATOR}" CACHE STRING
