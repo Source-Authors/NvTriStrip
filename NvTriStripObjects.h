@@ -136,7 +136,7 @@ public:
 	void Combine(const NvFaceInfoVec &forward, const NvFaceInfoVec &backward);
 	  
 	//returns true if the face is "unique", i.e. has a vertex which doesn't exist in the faceVec
-	bool Unique(NvFaceInfoVec& faceVec, NvFaceInfo* face) const;
+	bool Unique(const NvFaceInfoVec& faceVec, NvFaceInfo* face) const;
 	  
 	// mark the triangle as taken by this strip
 	bool IsMarked    (NvFaceInfo *faceInfo) const;
@@ -203,8 +203,8 @@ protected:
 	bool IsDegenerate(const unsigned int v0, const unsigned int v1, const unsigned int v2);
 	
 	static int  GetNextIndex(const UIntVec &indices, NvFaceInfo *face);
-	static NvEdgeInfo *FindEdgeInfo(NvEdgeInfoVec &edgeInfos, int v0, int v1);
-	static NvFaceInfo *FindOtherFace(NvEdgeInfoVec &edgeInfos, int v0, int v1, NvFaceInfo *faceInfo);
+	static NvEdgeInfo *FindEdgeInfo(const NvEdgeInfoVec &edgeInfos, int v0, int v1);
+	static NvFaceInfo *FindOtherFace(NvEdgeInfoVec &edgeInfos, int v0, int v1, const NvFaceInfo *faceInfo);
 	NvFaceInfo *FindGoodResetPoint(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos);
 	
 	void FindAllStrips(NvStripInfoVec &allStrips, NvFaceInfoVec &allFaceInfos, NvEdgeInfoVec &allEdgeInfos, int numSamples);
@@ -216,16 +216,16 @@ protected:
 	void CommitStrips(NvStripInfoVec &allStrips, const NvStripInfoVec &strips);
 	
 	float AvgStripSize(const NvStripInfoVec &strips);
-	std::ptrdiff_t FindStartPoint(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos);
+	std::ptrdiff_t FindStartPoint(const NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos);
 	
 	void UpdateCacheStrip(VertexCache* vcache, NvStripInfo* strip);
 	void UpdateCacheFace(VertexCache* vcache, NvFaceInfo* face);
 	float CalcNumHitsStrip(VertexCache* vcache, NvStripInfo* strip);
 	int CalcNumHitsFace(VertexCache* vcache, NvFaceInfo* face);
-	int NumNeighbors(NvFaceInfo* face, NvEdgeInfoVec& edgeInfoVec);
+	int NumNeighbors(const NvFaceInfo* face, NvEdgeInfoVec& edgeInfoVec);
 	
 	void BuildStripifyInfo(NvFaceInfoVec &faceInfos, NvEdgeInfoVec &edgeInfos, const size_t maxIndex);
-	bool AlreadyExists(NvFaceInfo* faceInfo, NvFaceInfoVec& faceInfos);
+	bool AlreadyExists(NvFaceInfo* faceInfo, const NvFaceInfoVec& faceInfos);
 	
 	// let our strip info classes and the other classes get
 	// to these protected stripificaton methods if they want
