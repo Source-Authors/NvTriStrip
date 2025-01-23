@@ -4,10 +4,10 @@ cmake_minimum_required(VERSION 3.10)
 project(nvTriStrip)
 
 # Use static MSVC runtime.
-option(NVTS_ENABLE_STATIC_MSVC_RUNTIME "Build with static MSVC runtime." ON)
+option(NV_NVTS_ENABLE_STATIC_MSVC_RUNTIME "Build with static MSVC runtime." ON)
 
 # Use Address Sanitizer.
-option(NVTS_ENABLE_ASAN "Build with Address Sanitizer." OFF)
+option(NV_NVTS_ENABLE_ASAN "Build with Address Sanitizer." OFF)
 
 # Compiler id for Apple Clang is now AppleClang.
 if (POLICY CMP0025)
@@ -15,7 +15,7 @@ if (POLICY CMP0025)
 endif()
 
 # Setup root directory of the nvTriStrip project.
-set(NVTS_ROOT_DIR "${CMAKE_SOURCE_DIR}" CACHE STRING
+set(NV_NVTS_ROOT_DIR "${CMAKE_SOURCE_DIR}" CACHE STRING
   "Directory root of the nvTriStrip project.")
 
 ## Package information.
@@ -40,13 +40,13 @@ if (NOT DEFINED PACKAGE_VERSION)
   message(STATUS "[common]: Extracting Git software version.")
 
   if ("${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Windows")
-    execute_process(COMMAND cmd /c "git rev-list --branches HEAD | find /v " " /c" OUTPUT_VARIABLE NVTS_GIT_VERSION WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    execute_process(COMMAND cmd /c "git rev-list --branches HEAD | find /v " " /c" OUTPUT_VARIABLE NV_NVTS_GIT_VERSION WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   else()
-    execute_process(COMMAND bash "-c" "git rev-list --branches HEAD | wc -l | tr -d ' ' | tr -d '\n'" OUTPUT_VARIABLE NVTS_GIT_VERSION WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    execute_process(COMMAND bash "-c" "git rev-list --branches HEAD | wc -l | tr -d ' ' | tr -d '\n'" OUTPUT_VARIABLE NV_NVTS_GIT_VERSION WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endif()
 
   set(PACKAGE_VER_PATCH 0)
-  math(EXPR PACKAGE_VER_TWEAK ${NVTS_GIT_VERSION})
+  math(EXPR PACKAGE_VER_TWEAK ${NV_NVTS_GIT_VERSION})
   message(STATUS
     "[common]: Build version from Git (patch.tweak): ${PACKAGE_VER_PATCH}.${PACKAGE_VER_TWEAK}.")
 
@@ -69,71 +69,71 @@ message(STATUS "[common]: ${PACKAGE_NAME} version: ${PACKAGE_VERSION}.")
 
 ## Common variables.
 
-set(NVTS_BINARY_DIR "${CMAKE_BINARY_DIR}" CACHE STRING
+set(NV_NVTS_BINARY_DIR "${CMAKE_BINARY_DIR}" CACHE STRING
   "Directory of the nvTriStrip binaries output.")
-set(NVTS_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}" CACHE STRING
+set(NV_NVTS_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}" CACHE STRING
   "Name of the nvTriStrip build system.")
 
-set(NVTS_ENABLE_STD_ONLY OFF)
+set(NV_NVTS_ENABLE_STD_ONLY OFF)
 
-if (${NVTS_SYSTEM_NAME} STREQUAL "Darwin")
-  set(NVTS_OS_MACOS ON CACHE BOOL "MacOS is build system.")
-  set(NVTS_ENABLE_STD_ONLY ON)
+if (${NV_NVTS_SYSTEM_NAME} STREQUAL "Darwin")
+  set(NV_NVTS_OS_MACOS ON CACHE BOOL "MacOS is build system.")
+  set(NV_NVTS_ENABLE_STD_ONLY ON)
 else()
-  set(NVTS_OS_MACOS OFF CACHE BOOL "MacOS is NOT build system.")
+  set(NV_NVTS_OS_MACOS OFF CACHE BOOL "MacOS is NOT build system.")
 endif()
 
-if (${NVTS_SYSTEM_NAME} STREQUAL "Linux")
-  set(NVTS_OS_LINUX ON CACHE BOOL "Linux distro is build system.")
-  set(NVTS_ENABLE_STD_ONLY ON)
+if (${NV_NVTS_SYSTEM_NAME} STREQUAL "Linux")
+  set(NV_NVTS_OS_LINUX ON CACHE BOOL "Linux distro is build system.")
+  set(NV_NVTS_ENABLE_STD_ONLY ON)
 else()
-  set(NVTS_OS_LINUX OFF CACHE BOOL "Linux distro is NOT build system.")
+  set(NV_NVTS_OS_LINUX OFF CACHE BOOL "Linux distro is NOT build system.")
 endif()
 
-if (${NVTS_SYSTEM_NAME} STREQUAL "Windows")
-  set(NVTS_OS_WIN ON CACHE BOOL "Windows is build system.")
+if (${NV_NVTS_SYSTEM_NAME} STREQUAL "Windows")
+  set(NV_NVTS_OS_WIN ON CACHE BOOL "Windows is build system.")
 else()
-  set(NVTS_OS_WIN OFF CACHE BOOL "Windows is NOT build system.")
+  set(NV_NVTS_OS_WIN OFF CACHE BOOL "Windows is NOT build system.")
 endif()
 
-if (NVTS_OS_MACOS OR NVTS_OS_LINUX)
-  set(NVTS_OS_POSIX ON CACHE BOOL "POSIX compatible os is build system.")
+if (NV_NVTS_OS_MACOS OR NV_NVTS_OS_LINUX)
+  set(NV_NVTS_OS_POSIX ON CACHE BOOL "POSIX compatible os is build system.")
 else()
-  set(NVTS_OS_POSIX OFF CACHE BOOL "POSIX compatible os is NOT build system.")
+  set(NV_NVTS_OS_POSIX OFF CACHE BOOL "POSIX compatible os is NOT build system.")
 endif()
 
-set(NVTS_PRODUCT_NAME "nvTriStrip" CACHE STRING
+set(NV_NVTS_PRODUCT_NAME "nvTriStrip" CACHE STRING
   "Name of the nvTriStrip product.")
 
-set(NVTS_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
+set(NV_NVTS_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
   "CMake build type used to build ${PACKAGE_NAME}.")
-set(NVTS_CMAKE_GENERATOR "${CMAKE_GENERATOR}" CACHE STRING
+set(NV_NVTS_CMAKE_GENERATOR "${CMAKE_GENERATOR}" CACHE STRING
   "CMake generator used to generate build tree." FORCE)
-set(NVTS_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE STRING
+set(NV_NVTS_CXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE STRING
   "Compiler used to build ${PACKAGE_NAME}.")
-set(NVTS_CXX_COMPILER_ID "${CMAKE_CXX_COMPILER_ID}" CACHE STRING
+set(NV_NVTS_CXX_COMPILER_ID "${CMAKE_CXX_COMPILER_ID}" CACHE STRING
   "Compiler id used to build ${PACKAGE_NAME}.")
-set(NVTS_CXX_COMPILER_FRONTEND_VARIANT "${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}"
+set(NV_NVTS_CXX_COMPILER_FRONTEND_VARIANT "${CMAKE_CXX_COMPILER_FRONTEND_VARIANT}"
   CACHE STRING "Compiler frontend used to build ${PACKAGE_NAME}.")
-set(NVTS_EXPORT_COMPILE_COMMANDS ${CMAKE_EXPORT_COMPILE_COMMANDS} CACHE BOOL
+set(NV_NVTS_EXPORT_COMPILE_COMMANDS ${CMAKE_EXPORT_COMPILE_COMMANDS} CACHE BOOL
   "Enable/Disable output of compile commands during generation.")
 
-if (NVTS_CXX_COMPILER_ID MATCHES "Clang")
-  set(NVTS_COMPILER_CLANG ON CACHE BOOL "Compiler is Clang.")
+if (NV_NVTS_CXX_COMPILER_ID MATCHES "Clang")
+  set(NV_NVTS_COMPILER_CLANG ON CACHE BOOL "Compiler is Clang.")
 else()
-  set(NVTS_COMPILER_CLANG OFF CACHE BOOL "Compiler is NOT Clang.")
+  set(NV_NVTS_COMPILER_CLANG OFF CACHE BOOL "Compiler is NOT Clang.")
 endif()
 
-if (NVTS_CXX_COMPILER_ID STREQUAL "GNU")
-  set(NVTS_COMPILER_GCC ON CACHE BOOL "Compiler is GCC.")
+if (NV_NVTS_CXX_COMPILER_ID STREQUAL "GNU")
+  set(NV_NVTS_COMPILER_GCC ON CACHE BOOL "Compiler is GCC.")
 else()
-  set(NVTS_COMPILER_GCC OFF CACHE BOOL "Compiler is NOT GCC.")
+  set(NV_NVTS_COMPILER_GCC OFF CACHE BOOL "Compiler is NOT GCC.")
 endif()
 
-if (NVTS_CXX_COMPILER_ID STREQUAL "MSVC")
-  set(NVTS_COMPILER_MSVC ON CACHE BOOL "Compiler is MSVC.")
+if (NV_NVTS_CXX_COMPILER_ID STREQUAL "MSVC")
+  set(NV_NVTS_COMPILER_MSVC ON CACHE BOOL "Compiler is MSVC.")
 else()
-  set(NVTS_COMPILER_MSVC OFF CACHE BOOL "Compiler is NOT MSVC.")
+  set(NV_NVTS_COMPILER_MSVC OFF CACHE BOOL "Compiler is NOT MSVC.")
 endif()
 
 ## Common dependencies.
@@ -145,56 +145,56 @@ if (Git_FOUND)
   # Get the current working branch.
   execute_process(
     COMMAND "${GIT_EXECUTABLE}" rev-parse --abbrev-ref HEAD
-    WORKING_DIRECTORY ${NVTS_ROOT_DIR}
-    OUTPUT_VARIABLE NVTS_GIT_BRANCH
+    WORKING_DIRECTORY ${NV_NVTS_ROOT_DIR}
+    OUTPUT_VARIABLE NV_NVTS_GIT_BRANCH
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   # Get the latest commit hash.
   execute_process(
     COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
-    WORKING_DIRECTORY ${NVTS_ROOT_DIR}
-    OUTPUT_VARIABLE NVTS_GIT_COMMIT_HASH
+    WORKING_DIRECTORY ${NV_NVTS_ROOT_DIR}
+    OUTPUT_VARIABLE NV_NVTS_GIT_COMMIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   # Get the subject of the commit.
   execute_process(
     COMMAND "${GIT_EXECUTABLE}" log -1 --format=%s
-    WORKING_DIRECTORY "${NVTS_ROOT_DIR}"
-    OUTPUT_VARIABLE NVTS_GIT_COMMIT_SUBJECT
+    WORKING_DIRECTORY "${NV_NVTS_ROOT_DIR}"
+    OUTPUT_VARIABLE NV_NVTS_GIT_COMMIT_SUBJECT
     ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   message(STATUS
-    "[common]: Git using branch '${NVTS_GIT_BRANCH}', "
-    "commit ${NVTS_GIT_COMMIT_HASH} | ${NVTS_GIT_COMMIT_SUBJECT}.")
+    "[common]: Git using branch '${NV_NVTS_GIT_BRANCH}', "
+    "commit ${NV_NVTS_GIT_COMMIT_HASH} | ${NV_NVTS_GIT_COMMIT_SUBJECT}.")
 endif()
 
 message(STATUS
-  "[common]: ${PACKAGE_NAME} using CMake generator: ${NVTS_CMAKE_GENERATOR}.")
+  "[common]: ${PACKAGE_NAME} using CMake generator: ${NV_NVTS_CMAKE_GENERATOR}.")
 
 # Select correct threading library.
-if (NOT NVTS_OS_WIN)
+if (NOT NV_NVTS_OS_WIN)
   set(CMAKE_THREAD_PREFER_PTHREAD ON)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
 find_package(Threads REQUIRED)
 list(APPEND CMAKE_REQUIRED_LIBRARIES Threads::Threads)
 if (NOT CMAKE_THREAD_LIBS_INIT)
-  set(NVTS_THREADS_LIBRARY "system default" CACHE STRING
+  set(NV_NVTS_THREADS_LIBRARY "system default" CACHE STRING
     "Threads library used to build ${PACKAGE_NAME}.")
 else()
-  set(NVTS_THREADS_LIBRARY "${CMAKE_THREAD_LIBS_INIT}" CACHE STRING
+  set(NV_NVTS_THREADS_LIBRARY "${CMAKE_THREAD_LIBS_INIT}" CACHE STRING
     "Threads library used to build ${PACKAGE_NAME}.")
 endif()
 message(STATUS
-  "[common]: ${PACKAGE_NAME} using threading library: ${NVTS_THREADS_LIBRARY}.")
+  "[common]: ${PACKAGE_NAME} using threading library: ${NV_NVTS_THREADS_LIBRARY}.")
 
 if (XCODE_VERSION)
   message(STATUS
     "[common]: ${PACKAGE_NAME} using XCode version: ${XCODE_VERSION}.")
 endif()
 
-message(STATUS "[common]: ${PACKAGE_NAME} cxx compiler: ${NVTS_CXX_COMPILER}.")
-message(STATUS "[common]: ${PACKAGE_NAME} build type: ${NVTS_BUILD_TYPE}.")
+message(STATUS "[common]: ${PACKAGE_NAME} cxx compiler: ${NV_NVTS_CXX_COMPILER}.")
+message(STATUS "[common]: ${PACKAGE_NAME} build type: ${NV_NVTS_BUILD_TYPE}.")
 
 # https://github.com/izenecloud/cmake/blob/master/SetCompilerWarningAll.cmake
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -215,14 +215,14 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   string(REGEX REPLACE "/GR" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR-")
 
-  if (NVTS_ENABLE_ASAN)
+  if (NV_NVTS_ENABLE_ASAN)
     message(STATUS "[options]: ASAN enabled.")
 
     # Use AddressSanitizer.
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fsanitize=address")
-  endif (NVTS_ENABLE_ASAN)
+  endif (NV_NVTS_ENABLE_ASAN)
 
-  if (NVTS_ENABLE_STATIC_MSVC_RUNTIME)
+  if (NV_NVTS_ENABLE_STATIC_MSVC_RUNTIME)
     # Use static runtime.
     foreach(flag_var
         CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
@@ -233,7 +233,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
       endif()
     endforeach()
-  endif (NVTS_ENABLE_STATIC_MSVC_RUNTIME)
+  endif (NV_NVTS_ENABLE_STATIC_MSVC_RUNTIME)
 else(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   # Use -Wall for clang and gcc.
   if(NOT CMAKE_CXX_FLAGS MATCHES "-Wall")
@@ -256,12 +256,12 @@ else(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   string(REGEX REPLACE "-frtti" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 
-  if (NVTS_ENABLE_ASAN)
+  if (NV_NVTS_ENABLE_ASAN)
     message(STATUS "[options]: ASAN enabled.")
 
     # Use AddressSanitizer.
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
-  endif (NVTS_ENABLE_ASAN)
+  endif (NV_NVTS_ENABLE_ASAN)
 endif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 
 add_library(${PACKAGE_NAME} STATIC "")
