@@ -28,5 +28,5 @@ cache size you may of heard about.  This is 16 for GeForce1 and 2, and 24 for Ge
 Credit goes to Curtis Beeson and Joe Demers for the basis for this stripifier and to Jason Regier and 
 Jon Stone at Blizzard for providing a much cleaner version of CreateStrips().
 
-Questions/comments email cem@nvidia.com
+Questions/comments email <cem@nvidia.com>
 
